@@ -1,6 +1,4 @@
-# =====================================================
 # ⚡ ELECTRON / NODE.JS IGNORE RULES
-# =====================================================
 
 # Node modules
 node_modules/
@@ -35,9 +33,9 @@ pnpm-debug.log*
 .env
 .env.*
 
-# =====================================================
+
 # 🐍 PYTHON IGNORE RULES
-# =====================================================
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -71,9 +69,9 @@ coverage.xml
 *.db
 *.pkl
 
-# =====================================================
-# 🧠 PROJECT-SPECIFIC
-# =====================================================
+
+#  PROJECT-SPECIFIC
+
 
 # Electron build configs and backups
 desktop-agent/release/
@@ -86,9 +84,9 @@ desktop-agent/electron-builder.yml.bak
 !README.md        # allow main READMEs
 !desktop-agent/README.md
 
-# =====================================================
-# 🧰 SYSTEM / IDE FILES
-# =====================================================
+
+#  SYSTEM / IDE FILES
+
 
 # macOS
 .DS_Store
@@ -106,7 +104,3 @@ Desktop.ini
 *.njsproj
 *.sln
 *.sw?
-
-# =====================================================
-# 🚀 END OF FILE
-# =====================================================
