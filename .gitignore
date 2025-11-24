@@ -25,3 +25,8 @@ desktop-agent/release/
 *.tar.gz
 dist/
 build/
+
+desktop-agent/release/
+*.exe
+*.dlldesktop-agent/release/
+*.exe
