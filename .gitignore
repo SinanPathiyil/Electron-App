@@ -16,3 +16,12 @@ venv/
 # Node modules
 frontend/node_modules/
 desktop-agent/node_modules/
+
+desktop-agent/release/
+*.exe
+*.dll
+*.zip
+*.dmg
+*.tar.gz
+dist/
+build/
