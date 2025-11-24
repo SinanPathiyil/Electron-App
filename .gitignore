@@ -1,32 +1,106 @@
-# Python cache and environment files
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.sqlite3
-.env
-.venv/
-venv/
-*.log
-
-# VS Code settings
-.vscode/
-
+# =====================================================
+# 📦 NODE / ELECTRON PROJECTS
+# =====================================================
 
 # Node modules
-frontend/node_modules/
+node_modules/
 desktop-agent/node_modules/
+desktop_agent_copy/node_modules/
 
-desktop-agent/release/
-*.exe
-*.dll
-*.zip
-*.dmg
-*.tar.gz
+# Build output folders
 dist/
 build/
+out/
+release/
+win-unpacked/
+*.asar
 
+# Electron packaged apps and installers
+*.exe
+*.msi
+*.dmg
+*.pkg
+*.app
+*.zip
+*.tar
+*.tar.gz
+
+# Logs and temp
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Environment files
+.env
+.env.*
+*.local
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDEs and editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# =====================================================
+# 🐍 PYTHON PROJECTS
+# =====================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+coverage.xml
+*.cover
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# PyInstaller
+*.spec
+build/
+dist/
+
+# Local config files
+*.sqlite3
+*.db
+
+# =====================================================
+# 💡 PROJECT-SPECIFIC EXCLUSIONS
+# =====================================================
+
+# Ignore Electron build releases
 desktop-agent/release/
-*.exe
-*.dlldesktop-agent/release/
-*.exe
+desktop_agent_copy/release/
+
+# Ignore model or binary files
+*.pkl
+*.onnx
+*.h5
+*.pt
+*.bin
+*.ckpt
