@@ -1,13 +1,12 @@
 # =====================================================
-# 📦 NODE / ELECTRON PROJECTS
+# ⚡ ELECTRON / NODE.JS IGNORE RULES
 # =====================================================
 
 # Node modules
 node_modules/
 desktop-agent/node_modules/
-desktop_agent_copy/node_modules/
 
-# Build output folders
+# Build artifacts
 dist/
 build/
 out/
@@ -15,7 +14,7 @@ release/
 win-unpacked/
 *.asar
 
-# Electron packaged apps and installers
+# Electron installers and executables
 *.exe
 *.msi
 *.dmg
@@ -25,7 +24,7 @@ win-unpacked/
 *.tar
 *.tar.gz
 
-# Logs and temp
+# Logs and temp files
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -35,22 +34,9 @@ pnpm-debug.log*
 # Environment files
 .env
 .env.*
-*.local
-
-# OS junk
-.DS_Store
-Thumbs.db
-
-# IDEs and editors
-.vscode/
-.idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
 
 # =====================================================
-# 🐍 PYTHON PROJECTS
+# 🐍 PYTHON IGNORE RULES
 # =====================================================
 
 # Byte-compiled / optimized / DLL files
@@ -77,30 +63,50 @@ coverage.xml
 *.cover
 .hypothesis/
 
-# Jupyter Notebook
-.ipynb_checkpoints
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
 
-# PyInstaller
-*.spec
-build/
-dist/
-
-# Local config files
+# Local databases / cache
 *.sqlite3
 *.db
-
-# =====================================================
-# 💡 PROJECT-SPECIFIC EXCLUSIONS
-# =====================================================
-
-# Ignore Electron build releases
-desktop-agent/release/
-desktop_agent_copy/release/
-
-# Ignore model or binary files
 *.pkl
-*.onnx
-*.h5
-*.pt
-*.bin
-*.ckpt
+
+# =====================================================
+# 🧠 PROJECT-SPECIFIC
+# =====================================================
+
+# Electron build configs and backups
+desktop-agent/release/
+desktop-agent/icons/
+desktop-agent/public/icons_backup/
+desktop-agent/electron-builder.yml.bak
+
+# Temporary screenshots or text artifacts
+*.txt
+!README.md        # allow main READMEs
+!desktop-agent/README.md
+
+# =====================================================
+# 🧰 SYSTEM / IDE FILES
+# =====================================================
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# VS Code / JetBrains
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# =====================================================
+# 🚀 END OF FILE
+# =====================================================

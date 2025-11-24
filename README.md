@@ -4,7 +4,6 @@ Electron App
 ├─ desktop-agent
 │  ├─ activity_tracker.py
 │  ├─ agent.py
-│  ├─ agent.spec
 │  ├─ config.json
 │  ├─ config.py
 │  ├─ electron
@@ -19,7 +18,7 @@ Electron App
 │  ├─ package.json
 │  ├─ public
 │  │  ├─ electron.js
-│  │  ├─ icons
+│  │  ├─ icons_backup
 │  │  │  ├─ icon.icns
 │  │  │  ├─ icon.ico
 │  │  │  └─ icon.png
