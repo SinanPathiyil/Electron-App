@@ -1,9 +1,9 @@
 {
-  "api_url": "http://127.0.0.1:8000",
+  "api_url": "https://payroll-fh5e.onrender.com",
   "employee_email": "employee@company.com",
   "employee_password": "password123",
   "activity_check_interval": 10,
-  "idle_threshold": 20,
+  "idle_threshold": 180,
   "track_mouse": true,
   "track_keyboard": true,
   "track_applications": true

@@ -1,20 +1,27 @@
 // desktop-agent/public/electron.js
-const { app, BrowserWindow, ipcMain, Tray, Menu, Notification } = require('electron');
-const path = require('path');
-const isDev = require('electron-is-dev');
-const Store = require('electron-store');
-const { spawn } = require('child_process');
-const fs = require('fs');
+const {
+  app,
+  BrowserWindow,
+  ipcMain,
+  Tray,
+  Menu,
+  Notification,
+} = require("electron");
+const path = require("path");
+const isDev = require("electron-is-dev");
+const Store = require("electron-store");
+const { spawn } = require("child_process");
+const fs = require("fs");
 
-const ActivityTracker = require('../electron/tracker');
-const API = require('../electron/api');
+const ActivityTracker = require("../electron/tracker");
+const API = require("../electron/api");
 
 const store = new Store();
 
 // ✅ ADD THIS LINE - Force set API URL to IPv4
-if (!store.get('api_url')) {
-  store.set('api_url', 'http://127.0.0.1:8000');
-  console.log('✓ API URL set to http://127.0.0.1:8000');
+if (!store.get("api_url")) {
+  store.set("api_url", "https://payroll-fh5e.onrender.com");
+  //console.log("✓ API URL set to http://127.0.0.1:8000");
 }
 
 let mainWindow = null;
@@ -31,93 +38,166 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     show: false,
-    icon: path.join(__dirname, 'icons/icon.png'),
+    icon: path.join(__dirname, "icons/icon.png"),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       enableRemoteModule: false,
-      preload: path.join(__dirname, '../electron/preload.js')
-    }
+      webSecurity: false, // ✅ ADD THIS LINE
+      preload: path.join(__dirname, "../electron/preload.js"),
+    },
   });
-  
-  const startUrl = isDev 
-  ? 'http://localhost:3000'  // ✅ Change to YOUR main frontend port
-  : `file://${path.join(__dirname, '../build/index.html')}`;
+
+  const startUrl = isDev
+    ? "http://localhost:3000" // Still use local dev when developing
+    : "https://payroll-frontend-boehm.netlify.app"; // Production: load Netlify
 
   mainWindow.loadURL(startUrl);
-  if (isDev) mainWindow.webContents.openDevTools({ mode: 'detach' });
+  if (isDev) mainWindow.webContents.openDevTools({ mode: "detach" });
 
-  mainWindow.on('close', (event) => {
+  mainWindow.on("close", (event) => {
     if (!app.isQuitting) {
       event.preventDefault();
       mainWindow.hide();
       if (Notification.isSupported()) {
         new Notification({
-          title: 'Productivity Tracker',
-          body: 'App is still running in the system tray',
-          icon: path.join(__dirname, 'icons/icon.png')
+          title: "Productivity Tracker",
+          body: "App is still running in the system tray",
+          icon: path.join(__dirname, "icons/icon.png"),
         }).show();
       }
     }
     return false;
   });
 
-  mainWindow.on('closed', () => { mainWindow = null; });
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
 
-  mainWindow.once('ready-to-show', () => {
-    const token = store.get('token');
+  mainWindow.once("ready-to-show", () => {
+    mainWindow.show(); // ✅ ADD THIS LINE
+    const token = store.get("token");
     if (token) checkClockStatus();
   });
 }
 
 function createTray() {
-  const iconPath = path.join(__dirname, 'icons/icon.png');
+  const iconPath = path.join(__dirname, "icons/icon.png");
   tray = new Tray(iconPath);
 
-  const updateTrayMenu = (status = 'Not Tracking') => {
+  const updateTrayMenu = (status = "Not Tracking") => {
     const contextMenu = Menu.buildFromTemplate([
-      { label: 'Employee Productivity Tracker', enabled: false, icon: iconPath },
-      { type: 'separator' },
-      { label: `Status: ${status}`, enabled: false },
-      { type: 'separator' },
-      { label: 'Show Dashboard', click: () => { if (mainWindow) { mainWindow.show(); mainWindow.focus(); } } },
-      { label: 'Sync Now', click: async () => { 
-          if (agentProcess) new Notification({ title: 'Sync Triggered', body: 'Forcing activity sync...' }).show();
-          else new Notification({ title: 'Not Tracking', body: 'Please clock in first' }).show();
-        }
+      {
+        label: "Employee Productivity Tracker",
+        enabled: false,
+        icon: iconPath,
       },
-      { type: 'separator' },
-      { label: 'Settings', click: () => { if (mainWindow) { mainWindow.show(); mainWindow.webContents.send('navigate', '/settings'); } } },
-      { type: 'separator' },
-      { label: 'Quit', click: () => { app.isQuitting = true; app.quit(); } }
+      { type: "separator" },
+      { label: `Status: ${status}`, enabled: false },
+      { type: "separator" },
+      {
+        label: "Show Dashboard",
+        click: () => {
+          if (mainWindow) {
+            mainWindow.show();
+            mainWindow.focus();
+          }
+        },
+      },
+      {
+        label: "Sync Now",
+        click: async () => {
+          if (agentProcess)
+            new Notification({
+              title: "Sync Triggered",
+              body: "Forcing activity sync...",
+            }).show();
+          else
+            new Notification({
+              title: "Not Tracking",
+              body: "Please clock in first",
+            }).show();
+        },
+      },
+      { type: "separator" },
+      {
+        label: "Settings",
+        click: () => {
+          if (mainWindow) {
+            mainWindow.show();
+            mainWindow.webContents.send("navigate", "/settings");
+          }
+        },
+      },
+      { type: "separator" },
+      {
+        label: "Quit",
+        click: () => {
+          app.isQuitting = true;
+          app.quit();
+        },
+      },
     ]);
     tray.setContextMenu(contextMenu);
   };
 
   updateTrayMenu();
-  tray.setToolTip('Employee Productivity Tracker');
-  tray.on('double-click', () => { if (mainWindow) { mainWindow.show(); mainWindow.focus(); } });
+  tray.setToolTip("Employee Productivity Tracker");
+  tray.on("double-click", () => {
+    if (mainWindow) {
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
   tray.updateMenu = updateTrayMenu;
 }
 
 function startTracking() {
-  const token = store.get('token');
-  const user = store.get('user');
-  // Around line 79 - CHANGE THIS:
-  const apiUrl = store.get('api_url', 'http://127.0.0.1:8000');
+  const token = store.get("token");
+  const user = store.get("user");
+  const apiUrl = store.get("api_url", "https://payroll-fh5e.onrender.com");
 
+  if (!token || !user) {
+    console.log("⚠️ No token/user found.");
+    return;
+  }
 
-  if (!token || !user) { console.log('⚠️ No token/user found.'); return; }
-  if (agentProcess) { console.log('⚠️ Agent already running.'); stopTracking(); }
+  if (agentProcess) {
+    console.log("⚠️ Agent already running.");
+    stopTracking();
+  }
 
-  console.log('🚀 Starting Python agent...');
+  console.log("🚀 Starting Python agent...");
 
-  const agentPath = path.join(__dirname, '..', 'agent.py');
-  const agentDir = path.join(__dirname, '..');
-  const configPath = path.join(agentDir, 'config.json');
+  let agentCommand;
+  let agentArgs = [];
+  let agentDir;
 
-  if (!fs.existsSync(agentPath)) {
-    console.error('❌ agent.py not found');
+  if (isDev) {
+    // Development mode - use Python script
+    agentCommand = "python";
+    agentArgs = ["agent.py"];
+    agentDir = path.join(__dirname, "..");
+    console.log("📍 DEV MODE: Using Python script");
+  } else {
+    // Production mode - use bundled executable
+    if (process.platform === "win32") {
+      agentCommand = path.join(process.resourcesPath, "agent.exe");
+    } else if (process.platform === "darwin") {
+      agentCommand = path.join(process.resourcesPath, "agent");
+    } else {
+      console.error("❌ Unsupported platform");
+      startSimpleTracking();
+      return;
+    }
+    agentDir = process.resourcesPath;
+    console.log("📍 PRODUCTION MODE: Using bundled executable");
+    console.log("📦 Agent path:", agentCommand);
+  }
+
+  // Check if agent exists
+  if (!fs.existsSync(agentCommand)) {
+    console.error("❌ Agent not found at:", agentCommand);
     startSimpleTracking();
     return;
   }
@@ -125,109 +205,132 @@ function startTracking() {
   const spawnEnv = {
     ...process.env,
     EMPLOYEE_TOKEN: token,
-    EMPLOYEE_EMAIL: user?.email || '',
-    API_URL: apiUrl
+    EMPLOYEE_EMAIL: user?.email || "",
+    API_URL: apiUrl,
   };
 
-  agentProcess = spawn('python', ['agent.py'], {
+  agentProcess = spawn(agentCommand, agentArgs, {
     cwd: agentDir,
-    stdio: ['ignore', 'pipe', 'pipe'],
-    env: spawnEnv
+    stdio: ["ignore", "pipe", "pipe"],
+    env: spawnEnv,
   });
-  console.log('✅ Agent started (PID:', agentProcess.pid, ')');
 
-  agentProcess.stdout.on('data', (data) => {
+  console.log("✅ Agent started (PID:", agentProcess.pid, ")");
+
+  agentProcess.stdout.on("data", (data) => {
     const output = data.toString();
-    console.log('🐍', output.trim());
-    if (output.includes('Login successful') || output.includes('Using token from Electron')) {
-      if (tray) tray.updateMenu('Tracking Active');
-      if (mainWindow) mainWindow.webContents.send('tracking-started', { status: 'active' });
+    console.log("🐍", output.trim());
+    if (
+      output.includes("Login successful") ||
+      output.includes("Using token from Electron")
+    ) {
+      if (tray) tray.updateMenu("Tracking Active");
+      if (mainWindow)
+        mainWindow.webContents.send("tracking-started", { status: "active" });
     }
-    if (output.includes('Activity logged') || output.includes('Activity data sent successfully')) {
-      if (mainWindow) mainWindow.webContents.send('productivity-update', { timestamp: new Date().toISOString() });
+    if (
+      output.includes("Activity logged") ||
+      output.includes("Activity data sent successfully")
+    ) {
+      if (mainWindow)
+        mainWindow.webContents.send("productivity-update", {
+          timestamp: new Date().toISOString(),
+        });
     }
-    if (output.includes('Top 5 Applications') || output.includes('ACTIVE') || output.includes('IDLE')) {
-      if (mainWindow) mainWindow.webContents.send('productivity-update', { timestamp: new Date().toISOString() });
+    if (
+      output.includes("Top 5 Applications") ||
+      output.includes("ACTIVE") ||
+      output.includes("IDLE")
+    ) {
+      if (mainWindow)
+        mainWindow.webContents.send("productivity-update", {
+          timestamp: new Date().toISOString(),
+        });
     }
   });
 
-  agentProcess.stderr.on('data', (data) => {
+  agentProcess.stderr.on("data", (data) => {
     const error = data.toString().trim();
-    console.error('🐍 Error:', error);
-    // Also send errors to renderer for debugging
+    console.error("🐍 Error:", error);
     if (mainWindow) {
-      mainWindow.webContents.send('agent-error', { error });
+      mainWindow.webContents.send("agent-error", { error });
     }
   });
 
-  agentProcess.on('close', (code) => {
+  agentProcess.on("close", (code) => {
     console.log(`🐍 Agent exited: ${code}`);
     agentProcess = null;
-    if (tray) tray.updateMenu('Not Tracking');
-    if (mainWindow) mainWindow.webContents.send('tracking-stopped', { status: 'stopped' });
+    if (tray) tray.updateMenu("Not Tracking");
+    if (mainWindow)
+      mainWindow.webContents.send("tracking-stopped", { status: "stopped" });
   });
 
-  agentProcess.on('error', (error) => {
-    console.error('❌ Agent spawn failed:', error);
+  agentProcess.on("error", (error) => {
+    console.error("❌ Agent spawn failed:", error);
     agentProcess = null;
     startSimpleTracking();
   });
 
-  if (tray) tray.updateMenu('Starting...');
+  if (tray) tray.updateMenu("Starting...");
 }
 
 function startSimpleTracking() {
-  const token = store.get('token');
-  const apiUrl = store.get('api_url', process.env.REACT_APP_API_URL || 'http://localhost:8000/api');
+  const token = store.get("token");
+  const apiUrl = store.get(
+    "api_url",
+    process.env.REACT_APP_API_URL || "http://localhost:8000/api"
+  );
   if (!token) return;
 
-  console.log('🔄 Starting simple tracker (fallback)...');
+  console.log("🔄 Starting simple tracker (fallback)...");
   api = new API(apiUrl, token);
   tracker = new ActivityTracker(api, TRACKING_INTERVAL);
 
-  tracker.on('activity-sent', (data) => {
-    console.log('✓ Activity sent:', data);
-    if (tray && data.productivity_score) tray.updateMenu(`Score: ${data.productivity_score}`);
-    if (mainWindow) mainWindow.webContents.send('productivity-update', data);
+  tracker.on("activity-sent", (data) => {
+    console.log("✓ Activity sent:", data);
+    if (tray && data.productivity_score)
+      tray.updateMenu(`Score: ${data.productivity_score}`);
+    if (mainWindow) mainWindow.webContents.send("productivity-update", data);
   });
 
-  tracker.on('error', (error) => console.error('✗ Tracker error:', error));
+  tracker.on("error", (error) => console.error("✗ Tracker error:", error));
   tracker.start();
-  if (tray) tray.updateMenu('Simple Tracking Active');
+  if (tray) tray.updateMenu("Simple Tracking Active");
 }
 
 function stopTracking() {
   if (agentProcess) {
-    console.log('🛑 Stopping agent...');
-    
+    console.log("🛑 Stopping agent...");
+
     // Step 1: Create clock-out signal file
-    const fs = require('fs');
-    const path = require('path');
-    const signalFile = path.join(__dirname, '..', '.clockout_signal');
-    
+    const fs = require("fs");
+    const path = require("path");
+    const signalFile = path.join(__dirname, "..", ".clockout_signal");
+
     try {
-      fs.writeFileSync(signalFile, 'clockout', 'utf8');
-      console.log('✅ Clock-out signal created');
+      fs.writeFileSync(signalFile, "clockout", "utf8");
+      console.log("✅ Clock-out signal created");
     } catch (err) {
-      console.error('❌ Failed to create signal:', err);
+      console.error("❌ Failed to create signal:", err);
     }
-    
+
     // Step 2: Wait 3 seconds for agent to send data and exit
     setTimeout(() => {
       if (agentProcess) {
-        console.log('⏹️ Killing agent process...');
+        console.log("⏹️ Killing agent process...");
         try {
-          agentProcess.kill('SIGTERM');
+          agentProcess.kill("SIGTERM");
         } catch (err) {
-          console.error('Kill error:', err);
+          console.error("Kill error:", err);
         }
         agentProcess = null;
         isAgentRunning = false;
       }
-      
-      if (tray) tray.updateMenu('Not Tracking');
-      if (mainWindow) mainWindow.webContents.send('tracking-stopped', { status: 'stopped' });
-      console.log('✓ Tracking stopped');
+
+      if (tray) tray.updateMenu("Not Tracking");
+      if (mainWindow)
+        mainWindow.webContents.send("tracking-stopped", { status: "stopped" });
+      console.log("✓ Tracking stopped");
     }, 3000); // 3 seconds grace period
   }
 
@@ -238,24 +341,24 @@ function stopTracking() {
 }
 
 async function checkClockStatus() {
-  const token = store.get('token');
-  const apiUrl = store.get('api_url', 'http://127.0.0.1:8000');
+  const token = store.get("token");
+  const apiUrl = store.get("api_url", "http://127.0.0.1:8000");
   if (!token) return;
 
   try {
-    const tempAPI = new API(apiUrl + '/api', token);
+    const tempAPI = new API(apiUrl + "/api", token);
     const status = await tempAPI.getStatus();
-    console.log('Clock status:', status);
+    console.log("Clock status:", status);
 
     if (status.is_clocked_in && !agentProcess && !tracker) {
-      console.log('✅ Clocked in - starting tracking');
+      console.log("✅ Clocked in - starting tracking");
       startTracking();
     } else if (!status.is_clocked_in && (agentProcess || tracker)) {
-      console.log('⏹️ Clocked out - stopping tracking');
+      console.log("⏹️ Clocked out - stopping tracking");
       stopTracking();
     }
   } catch (error) {
-    console.error('Status check error:', error.message);
+    console.error("Status check error:", error.message);
   }
 }
 
@@ -264,23 +367,23 @@ async function checkClockStatus() {
 //  if (token) checkClockStatus();
 //}, 30000);
 
-ipcMain.handle('store-credentials', async (event, { token, email }) => {
-  console.log('💾 Storing credentials for:', email);
-  
-  store.set('token', token);
-  store.set('user', { email: email });
-  
+ipcMain.handle("store-credentials", async (event, { token, email }) => {
+  console.log("💾 Storing credentials for:", email);
+
+  store.set("token", token);
+  store.set("user", { email: email });
+
   // Update API URL if needed
-  const apiUrl = store.get('api_url', 'http://127.0.0.1:8000');
-  store.set('api_url', apiUrl);
-  
-  console.log('   API URL:', apiUrl);
-  
+  const apiUrl = store.get("api_url", "http://127.0.0.1:8000");
+  store.set("api_url", apiUrl);
+
+  console.log("   API URL:", apiUrl);
+
   return { success: true };
 });
 
-ipcMain.on('clock-status-changed', (event, isClockedIn) => {
-  console.log('Clock status changed:', isClockedIn);
+ipcMain.on("clock-status-changed", (event, isClockedIn) => {
+  console.log("Clock status changed:", isClockedIn);
   if (isClockedIn) startTracking();
   else stopTracking();
 });
@@ -288,21 +391,27 @@ ipcMain.on('clock-status-changed', (event, isClockedIn) => {
 app.whenReady().then(() => {
   createWindow();
   createTray();
-  console.log('✓ App ready');
+  console.log("✓ App ready");
 });
 
-app.on('window-all-closed', () => {});
-app.on('activate', () => { if (mainWindow === null) createWindow(); else mainWindow.show(); });
-app.on('before-quit', () => { app.isQuitting = true; stopTracking(); });
+app.on("window-all-closed", () => {});
+app.on("activate", () => {
+  if (mainWindow === null) createWindow();
+  else mainWindow.show();
+});
+app.on("before-quit", () => {
+  app.isQuitting = true;
+  stopTracking();
+});
 
-ipcMain.handle('login', async (event, credentials) => {
+ipcMain.handle("login", async (event, credentials) => {
   try {
-    const apiUrl = store.get('api_url', 'http://127.0.0.1:8000');
+    const apiUrl = store.get("api_url", "http://127.0.0.1:8000");
     const tempAPI = new API(apiUrl);
     const result = await tempAPI.login(credentials);
-    store.set('token', result.access_token);
-    store.set('user', result.user);
-    console.log('✅ Login:', result.user.email);
+    store.set("token", result.access_token);
+    store.set("user", result.user);
+    console.log("✅ Login:", result.user.email);
     //setTimeout(() => checkClockStatus(), 2000);
     return { success: true, user: result.user };
   } catch (error) {
@@ -310,26 +419,30 @@ ipcMain.handle('login', async (event, credentials) => {
   }
 });
 
-ipcMain.handle('logout', async (event) => {
+ipcMain.handle("logout", async (event) => {
   stopTracking();
-  store.delete('token');
-  store.delete('user');
-  if (tray) tray.updateMenu('Not Tracking');
+  store.delete("token");
+  store.delete("user");
+  if (tray) tray.updateMenu("Not Tracking");
   return { success: true };
 });
 
-ipcMain.handle('check-auth', async (event) => {
-  return { isAuthenticated: !!store.get('token'), user: store.get('user') || null };
+ipcMain.handle("check-auth", async (event) => {
+  return {
+    isAuthenticated: !!store.get("token"),
+    user: store.get("user") || null,
+  };
 });
 
-ipcMain.handle('get-stats', async (event) => {
-  if (agentProcess) return { tracking_type: 'enhanced', status: 'active' };
+ipcMain.handle("get-stats", async (event) => {
+  if (agentProcess) return { tracking_type: "enhanced", status: "active" };
   if (tracker) return tracker.getCurrentStats();
-  return { tracking_type: 'none', status: 'inactive' };
+  return { tracking_type: "none", status: "inactive" };
 });
 
-ipcMain.handle('sync-now', async (event) => {
-  if (agentProcess) return { success: true, message: 'Agent syncs automatically' };
+ipcMain.handle("sync-now", async (event) => {
+  if (agentProcess)
+    return { success: true, message: "Agent syncs automatically" };
   if (tracker) {
     try {
       await tracker.sendActivity();
@@ -338,48 +451,48 @@ ipcMain.handle('sync-now', async (event) => {
       return { success: false, error: error.message };
     }
   }
-  return { success: false, error: 'Not tracking' };
+  return { success: false, error: "Not tracking" };
 });
 
-ipcMain.handle('get-settings', async (event) => {
+ipcMain.handle("get-settings", async (event) => {
   return {
-    api_url: store.get('api_url', 'http://localhost:8000'),
+    api_url: store.get("api_url", "http://localhost:8000"),
     tracking_interval: TRACKING_INTERVAL / 1000,
-    auto_start: store.get('auto_start', false)
+    auto_start: store.get("auto_start", false),
   };
 });
 
-ipcMain.handle('update-settings', async (event, settings) => {
-  if (settings.api_url) store.set('api_url', settings.api_url);
+ipcMain.handle("update-settings", async (event, settings) => {
+  if (settings.api_url) store.set("api_url", settings.api_url);
   if (settings.auto_start !== undefined) {
-    store.set('auto_start', settings.auto_start);
+    store.set("auto_start", settings.auto_start);
     app.setLoginItemSettings({ openAtLogin: settings.auto_start });
   }
   return { success: true };
 });
 
-ipcMain.handle('open-external', async (event, url) => {
-  const { shell } = require('electron');
+ipcMain.handle("open-external", async (event, url) => {
+  const { shell } = require("electron");
   await shell.openExternal(url);
 });
 
-ipcMain.handle('force-start-tracking', async (event) => {
+ipcMain.handle("force-start-tracking", async (event) => {
   startTracking();
   return { success: true };
 });
 
-ipcMain.handle('force-stop-tracking', async (event) => {
+ipcMain.handle("force-stop-tracking", async (event) => {
   stopTracking();
   return { success: true };
 });
 
-ipcMain.handle('get-tracking-status', async (event) => {
+ipcMain.handle("get-tracking-status", async (event) => {
   return {
     isTracking: !!(agentProcess || tracker),
-    trackingType: agentProcess ? 'enhanced' : tracker ? 'simple' : 'none',
+    trackingType: agentProcess ? "enhanced" : tracker ? "simple" : "none",
     agentRunning: !!agentProcess,
-    simpleTrackerRunning: !!tracker
+    simpleTrackerRunning: !!tracker,
   };
 });
 
-console.log('✓ Electron initialized');
+console.log("✓ Electron initialized");
